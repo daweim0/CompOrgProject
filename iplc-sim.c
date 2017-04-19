@@ -333,31 +333,55 @@ void iplc_sim_process_pipeline_rtype(char *instruction, int dest_reg, int reg1, 
     pipeline[FETCH].stage.rtype.dest_reg = dest_reg;
 }
 
+
+/*
+ * author: David
+ */
 void iplc_sim_process_pipeline_lw(int dest_reg, int base_reg, unsigned int data_address)
 {
     /* You must implement this function */
 }
 
+
+/*
+ * Author: David
+ */
 void iplc_sim_process_pipeline_sw(int src_reg, int base_reg, unsigned int data_address)
 {
     /* You must implement this function */
 }
 
+
+/*
+ * Author: David
+ */
 void iplc_sim_process_pipeline_branch(int reg1, int reg2)
 {
     /* You must implement this function */
 }
 
+
+/*
+ * Author: Sean
+ */
 void iplc_sim_process_pipeline_jump(char *instruction)
 {
     /* You must implement this function */
 }
 
+
+/*
+ * Author: Sean
+ */
 void iplc_sim_process_pipeline_syscall()
 {
     /* You must implement this function */
 }
 
+
+/*
+ * Author: David
+ */
 void iplc_sim_process_pipeline_nop()
 {
     /* You must implement this function */
