@@ -309,7 +309,20 @@ void iplc_sim_push_pipeline_stage()
     }
     
     /* 5. Increment pipe_cycles 1 cycle for normal processing */
-    /* 6. push stages thru MEM->WB, ALU->MEM, DECODE->ALU, FETCH->ALU */
+
+
+    /* 6. push stages thru MEM->WB, ALU->MEM, DECODE->ALU, FETCH->ALU (should FETCH->ALU be FETCH->DECODE?)*/
+    // MEM -> WB
+
+
+    // ALU -> MEM
+
+
+    // DECODE -> ALU
+
+
+    // FETCH -> DECODE
+
     
     // 7. This is a give'me -- Reset the FETCH stage to NOP via bezero */
     memset(&(pipeline[FETCH]), 0, sizeof(pipeline_t)); // changed from bzero(&(pipeline[FETCH]), sizeof(pipeline_t));
@@ -336,24 +349,36 @@ void iplc_sim_process_pipeline_rtype(char *instruction, int dest_reg, int reg1, 
 
 /*
  * author: David
+ * TODO: Test this function
  */
 void iplc_sim_process_pipeline_lw(int dest_reg, int base_reg, unsigned int data_address)
 {
-    /* You must implement this function */
+    pipeline[FETCH].itype = LW;
+    pipeline[FETCH].instruction_address = instruction_address;
+
+    pipeline[FETCH].stage.lw.data_address = data_address;
+    pipeline[FETCH].stage.lw.dest_reg = dest_reg;
+    pipeline[FETCH].stage.lw.base_reg = base_reg;
 }
 
 
 /*
  * Author: David
+ * TODO: Test this function
  */
 void iplc_sim_process_pipeline_sw(int src_reg, int base_reg, unsigned int data_address)
 {
-    /* You must implement this function */
+    pipeline[FETCH].itype = SW;
+    pipeline[FETCH].instruction_address = instruction_address;
+
+    pipeline[FETCH].stage.sw.data_address = data_address;
+    pipeline[FETCH].stage.sw.src_reg = src_reg;
+    pipeline[FETCH].stage.sw.base_reg = base_reg;
 }
 
 
 /*
- * Author: David
+ * Author: Sean
  */
 void iplc_sim_process_pipeline_branch(int reg1, int reg2)
 {
@@ -381,10 +406,13 @@ void iplc_sim_process_pipeline_syscall()
 
 /*
  * Author: David
+ * TODO: Test this function
  */
 void iplc_sim_process_pipeline_nop()
 {
-    /* You must implement this function */
+    pipeline[FETCH].itype = NOP;
+    // Write everything to zero, make sure this is write though
+    memset(&(pipeline[FETCH]), 0, sizeof(pipeline_t));
 }
 
 /************************************************************************************************/
