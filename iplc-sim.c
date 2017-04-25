@@ -3,6 +3,9 @@
  Pipeline Cache Simulator
  ***********************************************************************/
 /***********************************************************************/
+
+// this is the coolest comment ever created
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
