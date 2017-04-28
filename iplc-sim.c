@@ -192,15 +192,15 @@ void iplc_sim_init(int index, int blocksize, int assoc)
  */
 void iplc_sim_LRU_replace_on_miss(int index, int tag)
 {
-    // /* Evict LRU and move each entry down the array */
-    // for (int i = 1; i < cache_assoc; ++i)
-    // {
-    //     cache[index].set[i - 1] = cache[index].set[i];
-    // }
+    /* Evict LRU and move each entry down the array */
+    for (int i = 1; i < cache_assoc; ++i)
+    {
+        cache[index].set[i - 1] = cache[index].set[i];
+    }
 
-    // /* Make new entry the MRU */
-    // cache[index].set[cache_assoc - 1].valid = 1;
-    // cache[index].set[cache_assoc - 1].tag = tag;
+    /* Make new entry the MRU */
+    cache[index].set[cache_assoc - 1].valid = 1;
+    cache[index].set[cache_assoc - 1].tag = tag;
 }
 
 /*
@@ -210,14 +210,14 @@ void iplc_sim_LRU_replace_on_miss(int index, int tag)
 void iplc_sim_LRU_update_on_hit(int index, int assoc_entry)
 {
 
-    // /* Move entry to MRU */
-    // cache_entry_t t = cache[index].set[assoc_entry];
+    /* Move entry to MRU */
+    cache_entry_t t = cache[index].set[assoc_entry];
 
-    // for (int i = assoc_entry + 1; i < cache_assoc; ++i)
-    // {
-    //     cache[index].set[i-1] = cache[index].set[i];
-    // }
-    // cache[index].set[cache_assoc - 1] = t;
+    for (int i = assoc_entry + 1; i < cache_assoc; ++i)
+    {
+        cache[index].set[i-1] = cache[index].set[i];
+    }
+    cache[index].set[cache_assoc - 1] = t;
     
 }
 
@@ -231,11 +231,11 @@ int iplc_sim_trap_address(unsigned int address)
 {
     int i=0, index=0;
     int tag=0;
-    int hit=0;
 
     cache_access++;
 
-    index = (address << (64 - (cache_blockoffsetbits + cache_index))) >> (64 - (2 * cache_blockoffsetbits + cache_index));
+    index = (address >> cache_blockoffsetbits) & ((1 << cache_index) - 1);
+    printf("index: %i\n", index);
 
     tag = address >> (cache_blockoffsetbits + cache_index);
     
@@ -245,11 +245,13 @@ int iplc_sim_trap_address(unsigned int address)
         if (cache[index].set[i].valid && cache[index].set[i].tag == tag) // Cache hit
         {
             iplc_sim_LRU_update_on_hit(index, i);
+            cache_hit++;
             return 1;
         }
     }
-    
+
     /* Cache miss */
+    cache_miss++;
     iplc_sim_LRU_replace_on_miss(index, tag);
 
     /* expects you to return 1 for hit, 0 for miss */
