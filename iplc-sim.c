@@ -180,8 +180,8 @@ void iplc_sim_init(int index, int blocksize, int assoc)
 
 /*
  * iplc_sim_trap_address() determined this is not in our cache.  Put it there
- * and make sure that is now our Most Recently Used (MRU) entry.
- */
+        * and make sure that is now our Most Recently Used (MRU) entry.
+*/
 void iplc_sim_LRU_replace_on_miss(int index, int tag)
 {
     /* You must implement this function */
@@ -296,6 +296,15 @@ void iplc_sim_push_pipeline_stage()
     /* 2. Check for BRANCH and correct/incorrect Branch Prediction */
     if (pipeline[DECODE].itype == BRANCH) {
         int branch_taken = 0;
+        // look at the next instruction in the pipeline, if its address
+        // is the branch's address + 4 then the branch was not taken
+        if(pipeline[DECODE].instruction_address + 4 != pipeline[FETCH].instruction_address) {
+            branch_taken = 1;
+        }
+        if(branch_predict_taken != branch_taken) {
+            // insert a delay if (branch not predicted and taken) or (predicted taken and not taken)
+            pipeline_cycles++;
+        }
     }
     
     /* 3. Check for LW delays due to use in ALU stage and if data hit/miss
