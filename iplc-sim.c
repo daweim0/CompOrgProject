@@ -4,8 +4,6 @@
  ***********************************************************************/
 /***********************************************************************/
 
-// this is the coolest comment ever created
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -61,7 +59,7 @@ long cache_hit=0;
 
 char instruction[16];
 char reg1[16];
-char reg2[16];
+char reg2[16];  // TODO: What is this? (and why is it only 16 chars long?)
 char offsetwithreg[16];
 unsigned int data_address=0;
 unsigned int instruction_address=0;
@@ -312,21 +310,15 @@ void iplc_sim_push_pipeline_stage()
     }
     
     /* 5. Increment pipe_cycles 1 cycle for normal processing */
+    pipeline_cycles++;
+
+    /* 6. push stages thru MEM->WB, ALU->MEM, DECODE->ALU, FETCH->ALU */
+    pipeline[WRITEBACK] = pipeline[MEM];
+    pipeline[MEM] = pipeline[ALU];
+    pipeline[ALU] = pipeline[DECODE];
+    pipeline[DECODE] = pipeline[FETCH];
 
 
-    /* 6. push stages thru MEM->WB, ALU->MEM, DECODE->ALU, FETCH->ALU (should FETCH->ALU be FETCH->DECODE?)*/
-    // MEM -> WB
-
-
-    // ALU -> MEM
-
-
-    // DECODE -> ALU
-
-
-    // FETCH -> DECODE
-
-    
     // 7. This is a give'me -- Reset the FETCH stage to NOP via bezero */
     memset(&(pipeline[FETCH]), 0, sizeof(pipeline_t)); // changed from bzero(&(pipeline[FETCH]), sizeof(pipeline_t));
 }
@@ -381,20 +373,29 @@ void iplc_sim_process_pipeline_sw(int src_reg, int base_reg, unsigned int data_a
 
 
 /*
- * Author: Sean
+ * Author: David
+ * TODO: Test
  */
 void iplc_sim_process_pipeline_branch(int reg1, int reg2)
 {
-    /* You must implement this function */
+    pipeline[FETCH].itype = BRANCH;
+    pipeline[FETCH].instruction_address = instruction_address;
+
+    pipeline[FETCH].stage.branch.reg1 = reg1;
+    pipeline[FETCH].stage.branch.reg2 = reg2;
 }
 
 
 /*
- * Author: Sean
+ * Author: David
+ * TODO: Test
  */
 void iplc_sim_process_pipeline_jump(char *instruction)
 {
-    /* You must implement this function */
+    pipeline[FETCH].itype = JUMP;
+    pipeline[FETCH].instruction_address = instruction_address;
+
+    strcpy(pipeline[FETCH].stage.jump.instruction, instruction);
 }
 
 
@@ -549,6 +550,7 @@ void iplc_sim_parse_instruction(char *buffer)
         // don't need to worry about getting regs -- just insert -1 values
         iplc_sim_process_pipeline_branch(-1, -1);
     }
+        // why are there two else if block for jumps? Is this a bug or intentional? -David
     else if (strncmp( instruction, "jal", 3 ) == 0 ||
              strncmp( instruction, "jr", 2 ) == 0 ||
              strncmp( instruction, "j", 1 ) == 0 ) {
