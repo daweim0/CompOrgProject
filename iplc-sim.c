@@ -48,7 +48,7 @@ typedef struct cache_entry
 
 typedef struct cache_line
 {
-    /* 
+    /*
      * Each cache_line is an array of entries
      * Last element is MRU, first is LRU
      */
@@ -223,7 +223,7 @@ void iplc_sim_LRU_update_on_hit(int index, int assoc_entry)
         cache[index].set[i-1] = cache[index].set[i];
     }
     cache[index].set[cache_assoc - 1] = t;
-    
+
 }
 
 /*
@@ -238,14 +238,14 @@ int iplc_sim_trap_address(unsigned int address)
 {
     int i=0, index=0;
     int tag=0;
-  
+
     cache_access++;
 
     index = (address >> cache_blockoffsetbits) & ((1 << cache_index) - 1);
     printf("index: %i\n", index);
 
     tag = address >> (cache_blockoffsetbits + cache_index);
-    
+
     /* Check the set associated with the index */
     for (i = 0; i <cache_assoc; ++i)
     {
@@ -405,6 +405,8 @@ void iplc_sim_process_pipeline_rtype(char *instruction, int dest_reg, int reg1, 
  */
 void iplc_sim_process_pipeline_lw(int dest_reg, int base_reg, unsigned int data_address)
 {
+    iplc_sim_push_pipeline_stage();
+
     pipeline[FETCH].itype = LW;
     pipeline[FETCH].instruction_address = instruction_address;
 
@@ -420,6 +422,8 @@ void iplc_sim_process_pipeline_lw(int dest_reg, int base_reg, unsigned int data_
  */
 void iplc_sim_process_pipeline_sw(int src_reg, int base_reg, unsigned int data_address)
 {
+    iplc_sim_push_pipeline_stage();
+
     pipeline[FETCH].itype = SW;
     pipeline[FETCH].instruction_address = instruction_address;
 
@@ -434,7 +438,13 @@ void iplc_sim_process_pipeline_sw(int src_reg, int base_reg, unsigned int data_a
  */
 void iplc_sim_process_pipeline_branch(int reg1, int reg2)
 {
-    /* You must implement this function */
+  iplc_sim_push_pipeline_stage();
+
+  pipeline[FETCH].itype = BRANCH;
+  pipeline[FETCH].instruction_address = instruction_address;
+
+  pipeline[FETCH].stage.branch.reg1 = reg1;
+  pipeline[FETCH].stage.branch.reg2 = reg2;
 }
 
 
@@ -443,7 +453,12 @@ void iplc_sim_process_pipeline_branch(int reg1, int reg2)
  */
 void iplc_sim_process_pipeline_jump(char *instruction)
 {
-    /* You must implement this function */
+  iplc_sim_push_pipeline_stage();
+
+  pipeline[FETCH].itype = JUMP;
+  pipeline[FETCH].instruction_address = instruction_address;
+
+  strcpy(pipeline[FETCH].stage.jump.instruction, instruction);
 }
 
 
@@ -452,7 +467,10 @@ void iplc_sim_process_pipeline_jump(char *instruction)
  */
 void iplc_sim_process_pipeline_syscall()
 {
-    /* You must implement this function */
+  iplc_sim_push_pipeline_stage();
+
+  pipeline[FETCH].itype = SYSCALL;
+  pipeline[FETCH].instruction_address = instruction_address;
 }
 
 
@@ -462,8 +480,11 @@ void iplc_sim_process_pipeline_syscall()
  */
 void iplc_sim_process_pipeline_nop()
 {
+    iplc_sim_push_pipeline_stage();
+
     pipeline[FETCH].itype = NOP;
-    // Write everything to zero, make sure this is write though
+    pipeline[FETCH].instruction_address = instruction_address;
+    // Write everything to zero, make sure this is right though
     memset(&(pipeline[FETCH]), 0, sizeof(pipeline_t));
 }
 
