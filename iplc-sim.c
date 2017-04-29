@@ -344,7 +344,6 @@ void iplc_sim_push_pipeline_stage()
                    pipeline[WRITEBACK].instruction_address, pipeline[WRITEBACK].itype, pipeline_cycles);
     }
 
-    //TODO: test
     /* 2. Check for BRANCH and correct/incorrect Branch Prediction */
     if (pipeline[DECODE].itype == BRANCH) {
         int branch_taken = 0;
@@ -356,7 +355,6 @@ void iplc_sim_push_pipeline_stage()
         if(branch_predict_taken != branch_taken) {
            // insert a delay if (branch not predicted and taken) or (predicted taken and not taken)
             pipeline_cycles++;
-            //TODO: actually insert NOP into pipeline?
         }
     }
 
@@ -375,14 +373,18 @@ void iplc_sim_push_pipeline_stage()
             inserted_nop = 1;
         }
 
-        if(inserted_nop) {
-            pipeline_cycles++;
+        if(! iplc_sim_trap_address(pipeline[MEM].stage.sw.data_address)) {
+            printf("DATA MISS:\t Address %x", pipeline[MEM].stage.sw.data_address);
+            inserted_nop = CACHE_MISS_DELAY;
         }
+
+        pipeline_cycles += inserted_nop;
     }
 
     /* 4. Check for SW mem acess and data miss .. add delay cycles if needed */
     if (pipeline[MEM].itype == SW) {
         if(! iplc_sim_trap_address(pipeline[MEM].stage.sw.data_address)) {
+            printf("DATA MISS:\t Address %x", pipeline[MEM].stage.sw.data_address);
             pipeline_cycles += CACHE_MISS_DELAY;
         }
     }
