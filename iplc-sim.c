@@ -344,6 +344,7 @@ void iplc_sim_push_pipeline_stage()
                    pipeline[WRITEBACK].instruction_address, pipeline[WRITEBACK].itype, pipeline_cycles);
     }
 
+    //TODO: test
     /* 2. Check for BRANCH and correct/incorrect Branch Prediction */
     if (pipeline[DECODE].itype == BRANCH) {
         int branch_taken = 0;
@@ -355,6 +356,7 @@ void iplc_sim_push_pipeline_stage()
         if(branch_predict_taken != branch_taken) {
            // insert a delay if (branch not predicted and taken) or (predicted taken and not taken)
             pipeline_cycles++;
+            //TODO: actually insert NOP into pipeline?
         }
     }
 
@@ -363,10 +365,26 @@ void iplc_sim_push_pipeline_stage()
      */
     if (pipeline[MEM].itype == LW) {
         int inserted_nop = 0;
+        // Insert a delay if the destination register is being used in another instruction
+        if(pipeline[MEM].stage.lw.dest_reg == pipeline[ALU].stage.rtype.reg1 ||
+                pipeline[MEM].stage.lw.dest_reg == pipeline[ALU].stage.rtype.reg2_or_constant ||
+                pipeline[MEM].stage.lw.dest_reg == pipeline[ALU].stage.sw.data_address ||
+                pipeline[MEM].stage.lw.dest_reg == pipeline[ALU].stage.sw.base_reg ||
+                pipeline[MEM].stage.lw.dest_reg == pipeline[ALU].stage.lw.data_address ||
+                pipeline[MEM].stage.lw.dest_reg == pipeline[ALU].stage.lw.base_reg) {
+            inserted_nop = 1;
+        }
+
+        if(inserted_nop) {
+            pipeline_cycles++;
+        }
     }
 
     /* 4. Check for SW mem acess and data miss .. add delay cycles if needed */
     if (pipeline[MEM].itype == SW) {
+        if(! iplc_sim_trap_address(pipeline[MEM].stage.sw.data_address)) {
+            pipeline_cycles += CACHE_MISS_DELAY;
+        }
     }
 
     /* 5. Increment pipe_cycles 1 cycle for normal processing */
@@ -377,7 +395,6 @@ void iplc_sim_push_pipeline_stage()
     pipeline[MEM] = pipeline[ALU];
     pipeline[ALU] = pipeline[DECODE];
     pipeline[DECODE] = pipeline[FETCH];
-
 
     // 7. This is a give'me -- Reset the FETCH stage to NOP via bezero */
     memset(&(pipeline[FETCH]), 0, sizeof(pipeline_t)); // changed from bzero(&(pipeline[FETCH]), sizeof(pipeline_t));
