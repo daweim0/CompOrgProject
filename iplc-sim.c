@@ -181,6 +181,8 @@ void iplc_sim_init(int index, int blocksize, int assoc)
 /*
  * iplc_sim_trap_address() determined this is not in our cache.  Put it there
  * and make sure that is now our Most Recently Used (MRU) entry.
+ *
+ * Author: Alex
  */
 void iplc_sim_LRU_replace_on_miss(int index, int tag)
 {
@@ -190,6 +192,8 @@ void iplc_sim_LRU_replace_on_miss(int index, int tag)
 /*
  * iplc_sim_trap_address() determined the entry is in our cache.  Update its
  * information in the cache.
+ *
+ * Author: Alex
  */
 void iplc_sim_LRU_update_on_hit(int index, int assoc_entry)
 {
@@ -201,6 +205,8 @@ void iplc_sim_LRU_update_on_hit(int index, int assoc_entry)
  * for cache_access, cache_hit, etc.  If our configuration supports
  * associativity we may need to check through multiple entries for our
  * desired index.  In that case we will also need to call the LRU functions.
+ *
+ * Author: Alex
  */
 int iplc_sim_trap_address(unsigned int address)
 {
