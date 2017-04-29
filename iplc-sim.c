@@ -39,13 +39,21 @@ void iplc_sim_process_pipeline_nop();
 // Outout performance results
 void iplc_sim_finalize();
 
+typedef struct cache_entry
+{
+    unsigned char valid;
+    unsigned int tag;
+
+} cache_entry_t;
+
 typedef struct cache_line
 {
-    // Your data structures for implementing your cache should include:
-    // a valid bit
-    // a tag
-    // a method for handling varying levels of associativity
-    // a method for selecting which item in the cache is going to be replaced
+    /* 
+     * Each cache_line is an array of entries
+     * Last element is MRU, first is LRU
+     */
+    cache_entry_t* set;
+
 } cache_line_t;
 
 cache_line_t *cache=NULL;
@@ -169,6 +177,7 @@ void iplc_sim_init(int index, int blocksize, int assoc)
 
     // Dynamically create our cache based on the information the user entered
     for (i = 0; i < (1<<index); i++) {
+        cache[i].set = (cache_entry_t *)malloc(sizeof(cache_line_t) * cache_assoc);
     }
 
     // init the pipeline -- set all data to zero and instructions to NOP
@@ -186,7 +195,15 @@ void iplc_sim_init(int index, int blocksize, int assoc)
  */
 void iplc_sim_LRU_replace_on_miss(int index, int tag)
 {
-    /* You must implement this function */
+    /* Evict LRU and move each entry down the array */
+    for (int i = 1; i < cache_assoc; ++i)
+    {
+        cache[index].set[i - 1] = cache[index].set[i];
+    }
+
+    /* Make new entry the MRU */
+    cache[index].set[cache_assoc - 1].valid = 1;
+    cache[index].set[cache_assoc - 1].tag = tag;
 }
 
 /*
@@ -197,7 +214,16 @@ void iplc_sim_LRU_replace_on_miss(int index, int tag)
  */
 void iplc_sim_LRU_update_on_hit(int index, int assoc_entry)
 {
-    /* You must implement this function */
+
+    /* Move entry to MRU */
+    cache_entry_t t = cache[index].set[assoc_entry];
+
+    for (int i = assoc_entry + 1; i < cache_assoc; ++i)
+    {
+        cache[index].set[i-1] = cache[index].set[i];
+    }
+    cache[index].set[cache_assoc - 1] = t;
+    
 }
 
 /*
@@ -212,12 +238,31 @@ int iplc_sim_trap_address(unsigned int address)
 {
     int i=0, index=0;
     int tag=0;
-    int hit=0;
+  
+    cache_access++;
 
-    // Call the appropriate function for a miss or hit
+    index = (address >> cache_blockoffsetbits) & ((1 << cache_index) - 1);
+    printf("index: %i\n", index);
+
+    tag = address >> (cache_blockoffsetbits + cache_index);
+    
+    /* Check the set associated with the index */
+    for (i = 0; i <cache_assoc; ++i)
+    {
+        if (cache[index].set[i].valid && cache[index].set[i].tag == tag) // Cache hit
+        {
+            iplc_sim_LRU_update_on_hit(index, i);
+            cache_hit++;
+            return 1;
+        }
+    }
+
+    /* Cache miss */
+    cache_miss++;
+    iplc_sim_LRU_replace_on_miss(index, tag);
 
     /* expects you to return 1 for hit, 0 for miss */
-    return hit;
+    return 0;
 }
 
 /*
