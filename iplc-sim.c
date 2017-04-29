@@ -156,7 +156,7 @@ void iplc_sim_init(int index, int blocksize, int assoc)
 
 
     cache_blockoffsetbits =
-    (int) rint((log( (double) (blocksize) )/ log(2)));
+    (int) rint((log( (double) (blocksize * 4) )/ log(2)));
     /* Note: rint function rounds the result up prior to casting */
 
     cache_size = assoc * ( 1 << index ) * ((32 * blocksize) + 33 - index - cache_blockoffsetbits);
