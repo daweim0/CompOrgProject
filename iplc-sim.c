@@ -4,9 +4,6 @@
  ***********************************************************************/
 /***********************************************************************/
 
-// this is the coolest comment ever created
-// I'm trying
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -15,7 +12,7 @@
 #include <math.h>
 
 #define MAX_CACHE_SIZE 10240
-#define CACHE_MISS_DELAY 10 // 10 cycle cache miss penazlty
+#define CACHE_MISS_DELAY 10 // 10 cycle cache miss penalty
 #define MAX_STAGES 5
 
 // init the simulator
@@ -151,7 +148,7 @@ void iplc_sim_init(int index, int blocksize, int assoc)
 
 
     cache_blockoffsetbits =
-    (int) rint((log( (double) (blocksize * 4) )/ log(2)));
+    (int) rint((log( (double) (blocksize) )/ log(2)));
     /* Note: rint function rounds the result up prior to casting */
 
     cache_size = assoc * ( 1 << index ) * ((32 * blocksize) + 33 - index - cache_blockoffsetbits);
