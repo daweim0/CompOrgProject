@@ -1,0 +1,20 @@
+Please enter the tracefile: Enter Cache Size (index), Blocksize and Level of Assoc 
+Enter Branch Prediction: 0 (NOT taken), 1 (TAKEN): Cache Configuration 
+   Index: 6 bits or 64 lines 
+   BlockSize: 2 
+   Associativity: 1 
+   BlockOffSetBits: 3 
+   CacheSize: 5632 
+ Cache Performance 
+	 Number of Cache Accesses is 35863 
+	 Number of Cache Misses is 1301 
+	 Number of Cache Hits is 34562 
+	 Cache Miss Rate is 0.036277 
+
+Pipeline Performance 
+	 Total Cycles is 52307 
+	 Total Instructions is 34753 
+	 Total Branch Instructions is 7044 
+	 Total Correct Branch Predictions is 1290 
+	 CPI is 1.505107 
+

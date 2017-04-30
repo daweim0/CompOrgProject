@@ -79,7 +79,7 @@ unsigned int branch_count=0;
 unsigned int correct_branch_predictions=0;
 
 unsigned int debug=0;
-unsigned int dump_pipeline=1;
+unsigned int dump_pipeline=0;
 
 enum instruction_type {NOP, RTYPE, LW, SW, BRANCH, JUMP, JAL, SYSCALL};
 
@@ -248,7 +248,8 @@ int iplc_sim_trap_address(unsigned int address)
 
     tag = address >> (cache_blockoffsetbits + cache_index);
 
-    printf("Address %x: Tag= %x, Index= %i\n", address, tag, index);
+    if (debug == 1)
+      printf("Address %x: Tag= %x, Index= %i\n", address, tag, index);
 
 
     /* Check the set associated with the index */
@@ -385,7 +386,8 @@ void iplc_sim_push_pipeline_stage()
         }
 
         if(! iplc_sim_trap_address(pipeline[MEM].stage.sw.data_address)) {
-            printf("DATA MISS:\t Address 0x%x\n", pipeline[MEM].stage.sw.data_address);
+            if (debug)
+              printf("DATA MISS:\t Address 0x%x\n", pipeline[MEM].stage.sw.data_address);
             inserted_nop = CACHE_MISS_DELAY - 1;
         }
 
@@ -395,7 +397,8 @@ void iplc_sim_push_pipeline_stage()
     /* 4. Check for SW mem acess and data miss .. add delay cycles if needed */
     if (pipeline[MEM].itype == SW) {
         if(! iplc_sim_trap_address(pipeline[MEM].stage.sw.data_address)) {
-            printf("DATA MISS:\t Address 0x%x\n", pipeline[MEM].stage.sw.data_address);
+            if (debug)
+              printf("DATA MISS:\t Address 0x%x\n", pipeline[MEM].stage.sw.data_address);
             pipeline_cycles += CACHE_MISS_DELAY - 1;
         }
     }
@@ -575,13 +578,13 @@ void iplc_sim_parse_instruction(char *buffer)
         // need to subtract 1, since the stage is pushed once more for actual instruction processing
         // also need to allow for a branch miss prediction during the fetch cache miss time -- by
         // counting cycles this allows for these cycles to overlap and not doubly count.
-
-        printf("INST MISS:\t Address 0x%x \n", instruction_address);
+        if (debug)
+          printf("INST MISS:\t Address 0x%x \n", instruction_address);
 
         for (i = pipeline_cycles, j = pipeline_cycles; i < j + CACHE_MISS_DELAY - 1; i++)
             iplc_sim_push_pipeline_stage();
     }
-    else
+    else if(debug)
         printf("INST HIT:\t Address 0x%x \n", instruction_address);
 
     // Parse the Instruction
