@@ -336,7 +336,7 @@ void iplc_sim_dump_pipeline()
 }
 
 /*
- * Check if various stages of our pipeline require stalls, forwarding, etc.
+ * Check if various stages of our pipeline require stalls, forwarding, etc and add the appropriate delays.
  * Then push the contents of our various pipeline stages through the pipeline.
  */
 void iplc_sim_push_pipeline_stage()
@@ -356,13 +356,12 @@ void iplc_sim_push_pipeline_stage()
     if (pipeline[DECODE].itype == BRANCH && pipeline[FETCH].itype != NOP) {
         int branch_taken = 0;
         // look at the next instruction in the pipeline, if its address
-        // is the branch's address + 4 then the branch was not taken
+        // is the current instruction's address + 4 then the branch was not taken
         if(pipeline[DECODE].instruction_address + 4 != pipeline[FETCH].instruction_address) {
             branch_taken = 1;
         }
+        // insert a delay if (branch not predicted and taken) or (predicted taken and not taken)
         if(branch_predict_taken != branch_taken) {
-            // insert a delay if (branch not predicted and taken) or (predicted taken and not taken)
-            // Bubble on incorrect prediction
             pipeline_cycles++;
         } else {
           correct_branch_predictions++;
@@ -375,7 +374,7 @@ void iplc_sim_push_pipeline_stage()
      */
     if (pipeline[MEM].itype == LW) {
         int inserted_nop = 0;
-        // Insert a delay if the destination register is being used in another instruction
+        // Insert a delay if the destination register is being used in another instruction in the ALU stage
         if(pipeline[MEM].stage.lw.dest_reg == pipeline[ALU].stage.rtype.reg1 ||
                 pipeline[MEM].stage.lw.dest_reg == pipeline[ALU].stage.rtype.reg2_or_constant ||
                 pipeline[MEM].stage.lw.dest_reg == pipeline[ALU].stage.sw.data_address ||
@@ -385,6 +384,7 @@ void iplc_sim_push_pipeline_stage()
             inserted_nop = 1;
         }
 
+        // Also check for a data miss and increase the delay if a memory access is needed.
         if(! iplc_sim_trap_address(pipeline[MEM].stage.sw.data_address)) {
             if (debug)
               printf("DATA MISS:\t Address 0x%x\n", pipeline[MEM].stage.sw.data_address);
@@ -416,7 +416,9 @@ void iplc_sim_push_pipeline_stage()
     memset(&(pipeline[FETCH]), 0, sizeof(pipeline_t)); // changed from bzero(&(pipeline[FETCH]), sizeof(pipeline_t));
 }
 
-/*
+/* Push an rtype instruction into the pipeline. This will over-write any instructions
+ * pushed after the last call of iplc_sim_push_pipeline_stage()
+ *
  * This function is fully implemented.  You should use this as a reference
  * for implementing the remaining instruction types.
  */
@@ -435,9 +437,8 @@ void iplc_sim_process_pipeline_rtype(char *instruction, int dest_reg, int reg1, 
 }
 
 
-/*
- * author: David
- * TODO: Test this function
+/* Push a load instruction into the pipeline. This will over-write any instructions
+ * pushed after the last call of iplc_sim_push_pipeline_stage()
  */
 void iplc_sim_process_pipeline_lw(int dest_reg, int base_reg, unsigned int data_address)
 {
@@ -452,9 +453,8 @@ void iplc_sim_process_pipeline_lw(int dest_reg, int base_reg, unsigned int data_
 }
 
 
-/*
- * Author: David
- * TODO: Test this function
+/* Push a save instruction into the pipeline. This will over-write any instructions
+ * pushed after the last call of iplc_sim_push_pipeline_stage()
  */
 void iplc_sim_process_pipeline_sw(int src_reg, int base_reg, unsigned int data_address)
 {
@@ -469,8 +469,8 @@ void iplc_sim_process_pipeline_sw(int src_reg, int base_reg, unsigned int data_a
 }
 
 
-/*
- * Author: Sean
+/* Push a branch instruction into the pipeline. This will over-write any instructions
+ * pushed after the last call of iplc_sim_push_pipeline_stage()
  */
 void iplc_sim_process_pipeline_branch(int reg1, int reg2)
 {
@@ -486,8 +486,8 @@ void iplc_sim_process_pipeline_branch(int reg1, int reg2)
 }
 
 
-/*
- * Author: Sean
+/* Push a jump instruction into the pipeline. This will over-write any instructions
+ * pushed after the last call of iplc_sim_push_pipeline_stage()
  */
 void iplc_sim_process_pipeline_jump(char *instruction)
 {
@@ -500,8 +500,8 @@ void iplc_sim_process_pipeline_jump(char *instruction)
 }
 
 
-/*
- * Author: Sean
+/* Push a syscall instruction into the pipeline. This will over-write any instructions
+ * pushed after the last call of iplc_sim_push_pipeline_stage()
  */
 void iplc_sim_process_pipeline_syscall()
 {
@@ -512,9 +512,8 @@ void iplc_sim_process_pipeline_syscall()
 }
 
 
-/*
- * Author: David
- * TODO: Test this function
+/* Push a nop instruction into the pipeline. This will over-write any instructions
+ * pushed after the last call of iplc_sim_push_pipeline_stage()
  */
 void iplc_sim_process_pipeline_nop()
 {
@@ -522,7 +521,7 @@ void iplc_sim_process_pipeline_nop()
 
     pipeline[FETCH].itype = NOP;
     pipeline[FETCH].instruction_address = instruction_address;
-    // Write everything to zero, make sure this is right though
+    // Write everything to zero, there is no data to keep track of
     memset(&(pipeline[FETCH]), 0, sizeof(pipeline_t));
 }
 
